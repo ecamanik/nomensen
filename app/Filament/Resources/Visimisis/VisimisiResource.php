@@ -2,19 +2,17 @@
 
 namespace App\Filament\Resources\Visimisis;
 
-use App\Filament\Resources\Visimisis\Pages\CreateVisimisi;
-use App\Filament\Resources\Visimisis\Pages\EditVisimisi;
-use App\Filament\Resources\Visimisis\Pages\ListVisimisis;
-use App\Filament\Resources\Visimisis\Pages\ViewVisimisi;
-use App\Filament\Resources\Visimisis\Schemas\VisimisiForm;
-use App\Filament\Resources\Visimisis\Schemas\VisimisiInfolist;
-use App\Filament\Resources\Visimisis\Tables\VisimisisTable;
+use App\Filament\Resources\Visimisis\Pages;
 use App\Models\Visimisi;
 use BackedEnum;
 use UnitEnum;
-use Filament\Resources\Resource;
+use Filament\Actions;
+use Filament\Forms;
 use Filament\Schemas\Schema;
+use Filament\Resources\Resource;
+use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 
 class VisimisiResource extends Resource
 {
@@ -26,37 +24,111 @@ class VisimisiResource extends Resource
     protected static ?string $pluralModelLabel = 'Visi & Misi';
     protected static string|UnitEnum|null $navigationGroup = 'Profil Universitas';
     protected static ?int $navigationSort = 3;
-    protected static ?string $recordTitleAttribute = 'Visimisi';
 
     public static function form(Schema $schema): Schema
     {
-        return VisimisiForm::configure($schema);
-    }
+        return $schema
+            ->components([
+                Forms\Components\RichEditor::make('visi')
+                    ->label('Visi')
+                    ->toolbarButtons([
+                        'bold',
+                        'italic',
+                        'underline',
+                        'bulletList',
+                        'orderedList',
+                        'link',
+                        'h3',
+                    ])
+                    ->required()
+                    ->columnSpanFull(),
 
-    public static function infolist(Schema $schema): Schema
-    {
-        return VisimisiInfolist::configure($schema);
+                Forms\Components\RichEditor::make('misi')
+                    ->label('Misi')
+                    ->toolbarButtons([
+                        'bold',
+                        'italic',
+                        'underline',
+                        'bulletList',
+                        'orderedList',
+                        'link',
+                        'h3',
+                    ])
+                    ->required()
+                    ->helperText('Gunakan numbered list untuk menuliskan poin-poin misi.')
+                    ->columnSpanFull(),
+
+                Forms\Components\FileUpload::make('image')
+                    ->label('Foto (Multiple)')
+                    ->image()
+                    ->multiple()
+                    ->reorderable()
+                    ->maxFiles(5)
+                    ->directory('visimisis')
+                    ->visibility('public')
+                    ->imagePreviewHeight('120')
+                    ->maxSize(2048)
+                    ->required()
+                    ->helperText('Bisa upload beberapa foto. Maks 5 foto, masing-masing 2MB.')
+                    ->columnSpanFull(),
+            ]);
     }
 
     public static function table(Table $table): Table
     {
-        return VisimisisTable::configure($table);
+        return $table
+            ->columns([
+                Tables\Columns\ImageColumn::make('image')
+                    ->label('Foto')
+                    ->disk('public')
+                    ->height(50)
+                    ->stacked()
+                    ->limit(3)
+                    ->limitedRemainingText(),
+
+                Tables\Columns\TextColumn::make('visi')
+                    ->label('Visi')
+                    ->formatStateUsing(fn (?string $state): string => Str::limit(strip_tags($state ?? ''), 60))
+                    ->wrap()
+                    ->searchable(),
+
+                Tables\Columns\TextColumn::make('misi')
+                    ->label('Misi')
+                    ->formatStateUsing(fn (?string $state): string => Str::limit(strip_tags($state ?? ''), 60))
+                    ->wrap()
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Diperbarui')
+                    ->dateTime('d/m/Y H:i')
+                    ->sortable(),
+            ])
+            ->filters([
+                //
+            ])
+            ->recordActions([
+                Actions\EditAction::make(),
+                Actions\DeleteAction::make(),
+            ])
+            ->toolbarActions([
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make(),
+                ]),
+            ])
+            ->defaultSort('updated_at', 'desc');
     }
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => ListVisimisis::route('/'),
-            'create' => CreateVisimisi::route('/create'),
-            'view' => ViewVisimisi::route('/{record}'),
-            'edit' => EditVisimisi::route('/{record}/edit'),
+            'index' => Pages\ListVisimisis::route('/'),
+            'create' => Pages\CreateVisimisi::route('/create'),
+            'edit' => Pages\EditVisimisi::route('/{record}/edit'),
         ];
     }
 }

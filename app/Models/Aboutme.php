@@ -13,7 +13,5 @@ class Aboutme extends Model
 
     protected $casts = [
         'image' => 'array',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
     ];
 }

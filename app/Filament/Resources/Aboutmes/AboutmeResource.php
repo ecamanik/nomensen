@@ -2,19 +2,17 @@
 
 namespace App\Filament\Resources\Aboutmes;
 
-use App\Filament\Resources\Aboutmes\Pages\CreateAboutme;
-use App\Filament\Resources\Aboutmes\Pages\EditAboutme;
-use App\Filament\Resources\Aboutmes\Pages\ListAboutmes;
-use App\Filament\Resources\Aboutmes\Pages\ViewAboutme;
-use App\Filament\Resources\Aboutmes\Schemas\AboutmeForm;
-use App\Filament\Resources\Aboutmes\Schemas\AboutmeInfolist;
-use App\Filament\Resources\Aboutmes\Tables\AboutmesTable;
+use App\Filament\Resources\Aboutmes\Pages;
 use App\Models\Aboutme;
 use BackedEnum;
 use UnitEnum;
-use Filament\Resources\Resource;
+use Filament\Actions;
+use Filament\Forms;
 use Filament\Schemas\Schema;
+use Filament\Resources\Resource;
+use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 
 class AboutmeResource extends Resource
 {
@@ -26,37 +24,90 @@ class AboutmeResource extends Resource
     protected static ?string $pluralModelLabel = 'Profil Universitas';
     protected static string|UnitEnum|null $navigationGroup = 'Profil Universitas';
     protected static ?int $navigationSort = 1;
-    protected static ?string $recordTitleAttribute = 'Aboutme';
 
     public static function form(Schema $schema): Schema
     {
-        return AboutmeForm::configure($schema);
-    }
+        return $schema
+            ->components([
+                Forms\Components\Textarea::make('content')
+                    ->label('Deskripsi Profil')
+                    ->required()
+                    ->rows(5)
+                    ->placeholder('Tuliskan profil singkat universitas (keunggulan, fokus pendidikan, dll.)')
+                    ->helperText('Deskripsi singkat tanpa formatting. Untuk konten berformat gunakan menu Sejarah.')
+                    ->columnSpanFull(),
 
-    public static function infolist(Schema $schema): Schema
-    {
-        return AboutmeInfolist::configure($schema);
+                Forms\Components\FileUpload::make('image')
+                    ->label('Foto (Multiple)')
+                    ->image()
+                    ->multiple()
+                    ->reorderable()
+                    ->maxFiles(5)
+                    ->directory('aboutmes')
+                    ->visibility('public')
+                    ->imagePreviewHeight('120')
+                    ->maxSize(2048)
+                    ->required()
+                    ->helperText('Bisa upload beberapa foto sekaligus. Maks 5 foto, masing-masing 2MB.')
+                    ->columnSpanFull(),
+            ]);
     }
 
     public static function table(Table $table): Table
     {
-        return AboutmesTable::configure($table);
+        return $table
+            ->columns([
+                Tables\Columns\ImageColumn::make('image')
+                    ->label('Foto')
+                    ->disk('public')
+                    ->height(50)
+                    ->stacked()
+                    ->limit(3)
+                    ->limitedRemainingText(),
+
+                Tables\Columns\TextColumn::make('content')
+                    ->label('Deskripsi')
+                    ->formatStateUsing(fn (?string $state): string => Str::limit(strip_tags($state ?? ''), 100))
+                    ->wrap()
+                    ->searchable(),
+
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Ditambahkan')
+                    ->dateTime('d/m/Y H:i')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Diperbarui')
+                    ->dateTime('d/m/Y H:i')
+                    ->sortable(),
+            ])
+            ->filters([
+                //
+            ])
+            ->recordActions([
+                Actions\EditAction::make(),
+                Actions\DeleteAction::make(),
+            ])
+            ->toolbarActions([
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make(),
+                ]),
+            ])
+            ->defaultSort('updated_at', 'desc');
     }
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => ListAboutmes::route('/'),
-            'create' => CreateAboutme::route('/create'),
-            'view' => ViewAboutme::route('/{record}'),
-            'edit' => EditAboutme::route('/{record}/edit'),
+            'index' => Pages\ListAboutmes::route('/'),
+            'create' => Pages\CreateAboutme::route('/create'),
+            'edit' => Pages\EditAboutme::route('/{record}/edit'),
         ];
     }
 }
