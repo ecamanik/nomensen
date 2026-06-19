@@ -14,11 +14,6 @@ class News extends Model
         'slug',
     ];
 
-    protected $casts = [
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-    ];
-
     /**
      * Relasi: News ini dimiliki oleh (dibuat oleh) satu User.
      */
