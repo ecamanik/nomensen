@@ -26,6 +26,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->brandName('B University')
+            ->authGuard('web')
             ->colors([
                 'primary' => '#3b82f6',
             ])
