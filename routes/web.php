@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\LandingpageController;
+use App\Http\Controllers\PerpustakaanController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -15,3 +16,12 @@ Route::get('/dosen',      [LandingpageController::class, 'lectures'])->name('lec
 Route::get('/mahasiswa',  [LandingpageController::class, 'students'])->name('students');
 Route::get('/pengumuman', [LandingpageController::class, 'announcements'])->name('announcements');
 Route::get('/berita',     [LandingpageController::class, 'news'])->name('news');
+
+/*
+|--------------------------------------------------------------------------
+| Perpustakaan Digital
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/perpustakaan', [PerpustakaanController::class, 'index'])
+    ->name('perpustakaan');
